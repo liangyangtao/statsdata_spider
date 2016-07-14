@@ -16,6 +16,7 @@ import org.apache.log4j.PropertyConfigurator;
 
 import com.unbank.dao.QuotasStorer;
 import com.unbank.fetch.Fetcher;
+import com.unbank.tools.DataIndexer;
 import com.unbank.tools.MD5;
 
 public class StatsHsSpider {
@@ -26,6 +27,7 @@ public class StatsHsSpider {
 	private static Log logger = LogFactory.getLog(StatsHsSpider.class);
 	private static boolean update = false;
 	private static String tablePre = "hsyd";
+	public static Map<Integer,String> dataindex = new HashMap<Integer,String>();
 	static {
 		// 启动日志
 		try {
@@ -63,6 +65,17 @@ public class StatsHsSpider {
 			name = (String) map.get("name");
 
 			int idLength = id.length();
+			String dataindexName =dataindex.get(idLength);
+			if(dataindexName.isEmpty()){
+				
+			}else{
+				if (!dataindexName.equals(name)){
+					continue;
+				}else{
+					dataindex.put(idLength, "");
+				}	
+			}
+			new DataIndexer().writerIndex(name, idLength);
 			switch (idLength) {
 			case 3:
 				// new MysqlTableMaker().makeTableSql("quotas",map);

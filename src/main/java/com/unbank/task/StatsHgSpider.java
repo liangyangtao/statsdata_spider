@@ -16,6 +16,7 @@ import org.apache.log4j.PropertyConfigurator;
 
 import com.unbank.dao.QuotasStorer;
 import com.unbank.fetch.Fetcher;
+import com.unbank.tools.DataIndexer;
 import com.unbank.tools.MD5;
 
 public class StatsHgSpider {
@@ -26,6 +27,7 @@ public class StatsHgSpider {
 	private static Log logger = LogFactory.getLog(StatsHgSpider.class);
 	private static boolean update = false;
 	private static String tablePre = "hgnd";
+	public static Map<Integer,String> dataindex = new HashMap<Integer,String>();
 	static {
 		// 启动日志
 		try {
@@ -39,7 +41,10 @@ public class StatsHgSpider {
 	}
 
 	public static void main(String[] args) {
-
+		dataindex.put(3,"综合");
+		dataindex.put(5,"");
+		dataindex.put(7,"");
+		dataindex.put(9,"");
 		new StatsHgSpider().getQuotasTree();
 	}
 
@@ -61,11 +66,22 @@ public class StatsHgSpider {
 		for (Map<String, Object> map : result) {
 			String id = (String) map.get("id");
 			name = (String) map.get("name");
-
 			int idLength = id.length();
+			String dataindexName =dataindex.get(idLength);
+			if(dataindexName.isEmpty()){
+				
+			}else{
+				if (!dataindexName.equals(name)){
+					continue;
+				}else{
+					dataindex.put(idLength, "");
+				}	
+			}
+			new DataIndexer().writerIndex(name, idLength);
 			switch (idLength) {
 			case 3:
 				// new MysqlTableMaker().makeTableSql("quotas",map);
+
 				if (!update) {
 					new QuotasStorer().saveQuotas(tablePre + "_quotas", map);
 				}

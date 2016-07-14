@@ -14,4 +14,11 @@ public class QuotasStorer extends BaseDao {
 		executeMapSQL(sql, colums);
 
 	}
+	
+	public void upIndex(String name, int idLength ){
+		String sql = "update  dataindex set name='"+name+"' where level="+idLength;
+		System.out.println(sql);
+		executeSQL(sql);
+		
+	}
 }
