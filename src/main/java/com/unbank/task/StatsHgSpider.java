@@ -27,7 +27,7 @@ public class StatsHgSpider {
 	private static Log logger = LogFactory.getLog(StatsHgSpider.class);
 	private static boolean update = false;
 	private static String tablePre = "hgnd";
-	public static Map<Integer,String> dataindex = new HashMap<Integer,String>();
+	public static Map<Integer, String> dataindex = new HashMap<Integer, String>();
 	static {
 		// 启动日志
 		try {
@@ -41,10 +41,10 @@ public class StatsHgSpider {
 	}
 
 	public static void main(String[] args) {
-		dataindex.put(3,"");
-		dataindex.put(5,"");
-		dataindex.put(7,"");
-		dataindex.put(9,"");
+		dataindex.put(3, "");
+		dataindex.put(5, "");
+		dataindex.put(7, "");
+		dataindex.put(9, "");
 		new StatsHgSpider().getQuotasTree();
 	}
 
@@ -62,20 +62,20 @@ public class StatsHgSpider {
 
 	public void getTree(Map<String, String> params, String name, String linkPid) {
 		JSONArray treeArray = getJsonArray(params);
-		List<Map<String, Object>> result = getTree(treeArray, name, linkPid);
+		List<Map<String, Object>> result = getTree(treeArray, linkPid);
 		for (Map<String, Object> map : result) {
 			String id = (String) map.get("id");
 			name = (String) map.get("name");
 			int idLength = id.length();
-			String dataindexName =dataindex.get(idLength);
-			if(dataindexName.isEmpty()){
-				
-			}else{
-				if (!dataindexName.equals(name)){
+			String dataindexName = dataindex.get(idLength);
+			if (dataindexName.isEmpty()) {
+
+			} else {
+				if (!dataindexName.equals(name)) {
 					continue;
-				}else{
+				} else {
 					dataindex.put(idLength, "");
-				}	
+				}
 			}
 			new DataIndexer().writerIndex(name, idLength);
 			switch (idLength) {
@@ -152,7 +152,7 @@ public class StatsHgSpider {
 				resultparams.put("dfwds",
 						"[{\"wdcode\":\"zb\",\"valuecode\":\"" + id + "\"}]");
 				JSONObject jsonObject = getJsonObject(resultparams);
-				getResult(jsonObject, name, linkPid);
+				getResult(jsonObject, linkPid);
 				// 获取详情页
 			}
 
@@ -171,15 +171,14 @@ public class StatsHgSpider {
 		return treeArray;
 	}
 
-	public List<Map<String, Object>> getTree(JSONArray treeArray, String name,
-			String linkPid) {
+	public List<Map<String, Object>> getTree(JSONArray treeArray, String linkPid) {
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		for (Object object : treeArray) {
 			JSONObject jsonObject = JSONObject.fromObject(object);
 			Map<String, Object> resultMap = (Map<String, Object>) JSONObject
 					.toBean(jsonObject, Map.class);
 			String newname = (String) resultMap.get("name");
-			resultMap.put("uniqueid", MD5.GetMD5Code(name + newname));
+			resultMap.put("uniqueid", MD5.GetMD5Code(linkPid + newname));
 			resultMap.put("linkPid", linkPid);
 			result.add(resultMap);
 		}
@@ -194,19 +193,18 @@ public class StatsHgSpider {
 		return jsonObject;
 	}
 
-	public void getResult(JSONObject jsonObject, String name, String linkPid) {
-
+	public void getResult(JSONObject jsonObject, String linkPid) {
 		JSONObject returndata = jsonObject.getJSONObject("returndata");
 		JSONArray dataNodeArray = returndata.getJSONArray("datanodes");
 		JSONArray wdNodeArray = returndata.getJSONArray("wdnodes");
 		Map<String, Map<String, Object>> wdMap = parserWdNode(wdNodeArray,
-				name, linkPid);
+				linkPid);
 		parserDataNode(dataNodeArray, wdMap);
 
 	}
 
 	private Map<String, Map<String, Object>> parserWdNode(
-			JSONArray wdNodeArray, String name, String linkPid) {
+			JSONArray wdNodeArray, String linkPid) {
 		Object object = wdNodeArray.get(0);
 		JSONArray nodes = JSONArray.fromObject(JSONObject.fromObject(object)
 				.get("nodes"));
@@ -224,7 +222,7 @@ public class StatsHgSpider {
 			resultMap.put("sortcode", htmlMap.get("sortcode"));
 			resultMap.put("unit", htmlMap.get("unit"));
 			String newname = (String) resultMap.get("name");
-			resultMap.put("uniqueid", MD5.GetMD5Code(name + newname));
+			resultMap.put("uniqueid", MD5.GetMD5Code(linkPid + newname));
 			resultMap.put("linkPid", linkPid);
 			wdMap.put((String) resultMap.get("code"), resultMap);
 			if (!update) {
@@ -260,7 +258,8 @@ public class StatsHgSpider {
 				Map<String, Object> prentMap = wdMap.get(wdcode);
 				String linkPid = (String) prentMap.get("uniqueid");
 				String name = (String) prentMap.get("name");
-				resultMap.put("uniqueid", MD5.GetMD5Code(name + sjcode + data));
+				resultMap.put("uniqueid",
+						MD5.GetMD5Code(linkPid + name + sjcode + data));
 				resultMap.put("linkPid", linkPid);
 				new QuotasStorer().saveQuotas(tablePre + "_data", resultMap);
 
