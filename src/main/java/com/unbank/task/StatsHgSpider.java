@@ -41,7 +41,7 @@ public class StatsHgSpider {
 	}
 
 	public static void main(String[] args) {
-		dataindex.put(3,"综合");
+		dataindex.put(3,"");
 		dataindex.put(5,"");
 		dataindex.put(7,"");
 		dataindex.put(9,"");

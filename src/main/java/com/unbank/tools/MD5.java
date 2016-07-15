@@ -1,5 +1,6 @@
 package com.unbank.tools;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -50,7 +51,12 @@ public class MD5 {
 			resultString = new String(strObj);
 			MessageDigest md = MessageDigest.getInstance("MD5");
 			// md.digest() 该函数返回值为存放哈希值结果的byte数组
-			resultString = byteToString(md.digest(strObj.getBytes()));
+			try {
+				resultString = byteToString(md.digest(strObj.getBytes("utf-8")));
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} catch (NoSuchAlgorithmException ex) {
 			ex.printStackTrace();
 		}
