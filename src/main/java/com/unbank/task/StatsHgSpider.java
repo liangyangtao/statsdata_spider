@@ -26,7 +26,7 @@ public class StatsHgSpider {
 
 	private static Log logger = LogFactory.getLog(StatsHgSpider.class);
 	private static boolean update = false;
-	private static String tablePre = "hgnd";
+	private static String tablePre = "hgyd";
 	public static Map<Integer, String> dataindex = new HashMap<Integer, String>();
 	static {
 		// 启动日志
@@ -56,13 +56,13 @@ public class StatsHgSpider {
 		params.put("dbcode", tablePre);
 		params.put("wdcode", "zb");
 		params.put("m", "getTree");
-		getTree(params, "", "");
+		getTree(params, "");
 
 	}
 
-	public void getTree(Map<String, String> params, String name, String linkPid) {
+	public void getTree(Map<String, String> params, String name) {
 		JSONArray treeArray = getJsonArray(params);
-		List<Map<String, Object>> result = getTree(treeArray, linkPid);
+		List<Map<String, Object>> result = getTree(treeArray);
 		for (Map<String, Object> map : result) {
 			String id = (String) map.get("id");
 			name = (String) map.get("name");
@@ -80,27 +80,22 @@ public class StatsHgSpider {
 			new DataIndexer().writerIndex(name, idLength);
 			switch (idLength) {
 			case 3:
-				// new MysqlTableMaker().makeTableSql("quotas",map);
-
 				if (!update) {
 					new QuotasStorer().saveQuotas(tablePre + "_quotas", map);
 				}
 				break;
 			case 5:
-				// new MysqlTableMaker().makeTableSql("category",map);
 				if (!update) {
 					new QuotasStorer().saveQuotas(tablePre + "_category", map);
 				}
 				break;
 			case 7:
-				// new MysqlTableMaker().makeTableSql("subcategory",map);
 				if (!update) {
 					new QuotasStorer().saveQuotas(tablePre + "_subcategory",
 							map);
 				}
 				break;
 			case 9:
-				// new MysqlTableMaker().makeTableSql("subcategory",map);
 				if (!update) {
 					new QuotasStorer().saveQuotas(tablePre + "_treecategory",
 							map);
@@ -110,8 +105,6 @@ public class StatsHgSpider {
 
 				break;
 			}
-			linkPid = (String) map.get("uniqueid");
-
 			boolean isp = true;
 			Object isPObject = map.get("isParent");
 			if (isPObject instanceof String) {
@@ -133,7 +126,7 @@ public class StatsHgSpider {
 			if (isp) {
 				// 获取下一级
 				params.put("id", id);
-				getTree(params, name, linkPid);
+				getTree(params, name);
 
 			} else {
 
@@ -144,16 +137,13 @@ public class StatsHgSpider {
 				resultparams.put("colcode", "sj");
 				resultparams.put("wds", "[]");
 				resultparams.put("k1", new Date().getTime() + "");
-				// if (!update) {
-				// resultparams.put("dfwds",
-				// "[{\"wdcode\":\"zb\",\"valuecode\":\"LAST36\"}]");
-				// spiderNode(resultparams);
-				// }
 				resultparams.put("dfwds",
 						"[{\"wdcode\":\"zb\",\"valuecode\":\"" + id + "\"}]");
+				spiderNode(resultparams);
+				resultparams.put("dfwds",
+						"[{\"wdcode\":\"sj\",\"valuecode\":\"LAST36\"}]");
 				JSONObject jsonObject = getJsonObject(resultparams);
-				getResult(jsonObject, linkPid);
-				// 获取详情页
+				getResult(jsonObject, id);
 			}
 
 		}
@@ -171,15 +161,14 @@ public class StatsHgSpider {
 		return treeArray;
 	}
 
-	public List<Map<String, Object>> getTree(JSONArray treeArray, String linkPid) {
+	public List<Map<String, Object>> getTree(JSONArray treeArray) {
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		for (Object object : treeArray) {
 			JSONObject jsonObject = JSONObject.fromObject(object);
 			Map<String, Object> resultMap = (Map<String, Object>) JSONObject
 					.toBean(jsonObject, Map.class);
-			String newname = (String) resultMap.get("name");
-			resultMap.put("uniqueid", MD5.GetMD5Code(linkPid + newname));
-			resultMap.put("linkPid", linkPid);
+			String id = (String) resultMap.get("id");
+			resultMap.put("uniqueid", MD5.GetMD5Code(id));
 			result.add(resultMap);
 		}
 		return result;
@@ -197,18 +186,15 @@ public class StatsHgSpider {
 		JSONObject returndata = jsonObject.getJSONObject("returndata");
 		JSONArray dataNodeArray = returndata.getJSONArray("datanodes");
 		JSONArray wdNodeArray = returndata.getJSONArray("wdnodes");
-		Map<String, Map<String, Object>> wdMap = parserWdNode(wdNodeArray,
-				linkPid);
-		parserDataNode(dataNodeArray, wdMap);
+		parserWdNode(wdNodeArray, linkPid);
+		parserDataNode(dataNodeArray);
 
 	}
 
-	private Map<String, Map<String, Object>> parserWdNode(
-			JSONArray wdNodeArray, String linkPid) {
+	private void parserWdNode(JSONArray wdNodeArray, String linkPid) {
 		Object object = wdNodeArray.get(0);
 		JSONArray nodes = JSONArray.fromObject(JSONObject.fromObject(object)
 				.get("nodes"));
-		Map<String, Map<String, Object>> wdMap = new HashMap<String, Map<String, Object>>();
 		for (Object node : nodes) {
 			JSONObject jsonObject = JSONObject.fromObject(node);
 			Map<String, Object> htmlMap = (Map<String, Object>) JSONObject
@@ -221,20 +207,16 @@ public class StatsHgSpider {
 			resultMap.put("nodesort", htmlMap.get("nodesort"));
 			resultMap.put("sortcode", htmlMap.get("sortcode"));
 			resultMap.put("unit", htmlMap.get("unit"));
-			String newname = (String) resultMap.get("name");
-			resultMap.put("uniqueid", MD5.GetMD5Code(linkPid + newname));
+			resultMap.put("uniqueid", MD5.GetMD5Code(htmlMap.get("code") + ""));
 			resultMap.put("linkPid", linkPid);
-			wdMap.put((String) resultMap.get("code"), resultMap);
 			if (!update) {
 				new QuotasStorer().saveQuotas(tablePre + "_wd", resultMap);
 			}
 		}
 
-		return wdMap;
 	}
 
-	private void parserDataNode(JSONArray dataNodeArray,
-			Map<String, Map<String, Object>> wdMap) {
+	private void parserDataNode(JSONArray dataNodeArray) {
 
 		for (Object object : dataNodeArray) {
 			JSONObject datanode = JSONObject.fromObject(object);
@@ -255,12 +237,7 @@ public class StatsHgSpider {
 				resultMap.put("dotcount", dotcount);
 				resultMap.put("hasdata", hasdata);
 				resultMap.put("strdata", strdata);
-				Map<String, Object> prentMap = wdMap.get(wdcode);
-				String linkPid = (String) prentMap.get("uniqueid");
-				String name = (String) prentMap.get("name");
-				resultMap.put("uniqueid",
-						MD5.GetMD5Code(linkPid + name + sjcode + data));
-				resultMap.put("linkPid", linkPid);
+				resultMap.put("uniqueid", MD5.GetMD5Code(code));
 				new QuotasStorer().saveQuotas(tablePre + "_data", resultMap);
 
 			}
