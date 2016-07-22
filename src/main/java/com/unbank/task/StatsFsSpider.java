@@ -27,7 +27,7 @@ public class StatsFsSpider {
 
 	private static Log logger = LogFactory.getLog(StatsFsSpider.class);
 	private static boolean update = false;
-	private static String tablePre = "fsjd";
+	private static String tablePre = "fsnd";
 	public static Map<Integer, String> dataindex = new HashMap<Integer, String>();
 	public static SimpleBloomFilter simpleBloomFilter = SimpleBloomFilter
 			.getInstance();
@@ -82,32 +82,8 @@ public class StatsFsSpider {
 				}
 			}
 			new DataIndexer().writerIndex(name, idLength);
-			switch (idLength) {
-			case 3:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_quotas", map);
-				}
-				break;
-			case 5:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_category", map);
-				}
-				break;
-			case 7:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_subcategory",
-							map);
-				}
-				break;
-			case 9:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_treecategory",
-							map);
-				}
-				break;
-			default:
-
-				break;
+			if (!update) {
+				new QuotasStorer().saveQuotas(tablePre + "_tree", map);
 			}
 			boolean isp = true;
 			Object isPObject = map.get("isParent");

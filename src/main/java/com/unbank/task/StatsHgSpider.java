@@ -78,32 +78,8 @@ public class StatsHgSpider {
 				}
 			}
 			new DataIndexer().writerIndex(name, idLength);
-			switch (idLength) {
-			case 3:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_quotas", map);
-				}
-				break;
-			case 5:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_category", map);
-				}
-				break;
-			case 7:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_subcategory",
-							map);
-				}
-				break;
-			case 9:
-				if (!update) {
-					new QuotasStorer().saveQuotas(tablePre + "_treecategory",
-							map);
-				}
-				break;
-			default:
-
-				break;
+			if (!update) {
+				new QuotasStorer().saveQuotas(tablePre + "_tree", map);
 			}
 			boolean isp = true;
 			Object isPObject = map.get("isParent");
